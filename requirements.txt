@@ -1,0 +1,6 @@
+google-cloud-storage
+
+pyproject-flake8
+flake8
+black
+isort

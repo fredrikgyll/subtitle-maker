@@ -1,0 +1,25 @@
+{
+  "results": [
+    {
+      "language_code": "en-us",
+      "alternatives": [
+        {
+          "transcript": "Lorem Ipsum",
+          "confidence": 0.97,
+          "words": [
+            {
+              "start_offset": {"seconds": 0, "nanos": 200000000},
+              "end_offset": {"seconds": 0, "nanos": 500000000},
+              "word": "Lorem"
+            },
+            {
+              "start_offset": {"seconds": 0, "nanos": 900000000},
+              "end_offset": {"seconds": 1, "nanos": 100000000},
+              "word": "Ipsum"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

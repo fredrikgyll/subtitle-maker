@@ -1,8 +1,9 @@
-from pathlib import Path
-import json
-from converter.subtitles import WordSequence, Word
 import argparse
+import json
+from pathlib import Path
 from urllib.parse import urlparse
+
+from converter.subtitles import Word, WordSequence
 
 parser = argparse.ArgumentParser(description='Convert Google transcript to .srt file')
 parser.add_argument(
@@ -26,9 +27,11 @@ parser.add_argument(
     help='Splitting method',
 )
 
+
 def read_document(uri):
     if uri.startswith('gs://'):
         from google.cloud import storage
+
         storage_client = storage.Client()
         url = urlparse(uri)
         bucket = storage_client.bucket(url.netloc)
@@ -42,7 +45,6 @@ def read_document(uri):
     return document
 
 
-
 if __name__ == "__main__":
     args = parser.parse_args()
     print('Reading transcript')
@@ -51,8 +53,8 @@ if __name__ == "__main__":
     print('Compiling Subtitles')
     if args.method == 'single':
         subgroups = [
-            WordSequence([Word(**w)]) 
-            for result in document['results'] 
+            WordSequence([Word(**w)])
+            for result in document['results']
             for w in result['alternatives'][0]['words']
         ]
     elif args.method == 'raw':
@@ -61,8 +63,8 @@ if __name__ == "__main__":
             for result in document['results']
         ]
     else:
-        raise NotImplemented(f'{args.method} mode not implemented')
-    
+        raise NotImplementedError(f'{args.method} mode not implemented')
+
     print('Writing subtitle file')
     with args.output.open('w') as f:
         for i, group in enumerate(subgroups, start=1):
