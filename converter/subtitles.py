@@ -1,22 +1,29 @@
 import time
 from decimal import Decimal
 from functools import total_ordering
-from typing import List, Tuple
 
 
 @total_ordering
 class Offset:
-    def __init__(self, seconds, nanos=0):
-        self.seconds: int = seconds
-        self.nanos: int = nanos
+    def __init__(self, seconds=0, nanos=0):
         self.time: Decimal = (
             Decimal(seconds) + (Decimal(nanos) / Decimal(1e9)).normalize()
         )
 
+    @property
+    def seconds(self) -> int:
+        return int(self.time)
+
+    @property
+    def milis(self) -> int:
+        return round((self.time - self.seconds) * 1000)
+
+    def shift(self, value):
+        self.time += value
+
     def __str__(self) -> str:
         hhmmss = time.strftime('%H:%M:%S', time.gmtime(self.seconds))
-        milis = self.nanos // 1000000
-        return f'{hhmmss},{milis:03d}'
+        return f'{hhmmss},{self.milis:03d}'
 
     def __repr__(self) -> str:
         return self.__str__()
@@ -28,11 +35,42 @@ class Offset:
         return self.time < other.time
 
 
-class Word:
+class Subtitle:
+    @property
+    def duration(self) -> Decimal:
+        """Return duration of subtitle"""
+        start, end = self.interval
+        return end.time - start.time
+
+    @property
+    def interval(self) -> tuple[Offset, Offset]:
+        """Return tuple of start and end times"""
+        raise NotImplementedError('Not implemeted by Subclass')
+
+    @property
+    def tanscript(self) -> str:
+        """Return transcript of subtitle"""
+        raise NotImplementedError('Not implemeted by Subclass')
+
+    def srt(self) -> str:
+        """Return SRT blob of subtitle"""
+        start, end = self.interval
+        return f'{start} --> {end}\n{self.tanscript}\n\n'
+
+
+class Word(Subtitle):
     def __init__(self, word: str, start_offset, end_offset):
         self.word = word
         self.start = Offset(**start_offset)
         self.end = Offset(**end_offset)
+
+    @property
+    def interval(self) -> tuple[Offset, Offset]:
+        return self.start, self.end
+
+    @property
+    def tanscript(self) -> str:
+        return self.word
 
     def __str__(self) -> str:
         return self.word
@@ -44,7 +82,7 @@ class Word:
         return len(self.word)
 
 
-class WordSequence(list):
+class WordSequence(list, Subtitle):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
@@ -58,7 +96,7 @@ class WordSequence(list):
         return sum([len(x) for x in self])
 
     @property
-    def interval(self) -> Tuple[Offset, Offset]:
+    def interval(self) -> tuple[Offset, Offset]:
         if not len(self):
             raise IndexError('Empty sequence')
         return self[0].start, self[-1].end
@@ -66,7 +104,3 @@ class WordSequence(list):
     @property
     def tanscript(self) -> str:
         return ' '.join(str(x) for x in self)
-
-    def srt(self) -> str:
-        start, end = self.interval
-        return f'{start} --> {end}\n{self.tanscript}\n'
